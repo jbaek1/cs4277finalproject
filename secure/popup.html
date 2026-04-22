@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Secure Summarizer</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        width: 340px;
+        margin: 12px;
+      }
+      .notice {
+        border: 1px solid #d6a700;
+        background: #fff8db;
+        padding: 8px;
+        margin-bottom: 8px;
+        font-size: 12px;
+      }
+      button {
+        margin-right: 8px;
+      }
+      #output,
+      #history {
+        white-space: pre-wrap;
+        border: 1px solid #ccc;
+        padding: 8px;
+        margin-top: 8px;
+        max-height: 160px;
+        overflow-y: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <h3>Secure Summarizer</h3>
+    <div class="notice">
+      Highlight only non-sensitive text before summarizing. Do not select
+      passwords, IDs, account numbers, or tokens.
+    </div>
+    <button id="summarizeBtn">Summarize Selection</button>
+    <button id="historyBtn">View History</button>
+    <div id="output">Summary output appears here.</div>
+    <div id="history">History output appears here.</div>
+    <script src="popup.js"></script>
+  </body>
+</html>

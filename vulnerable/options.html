@@ -1,0 +1,88 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Summary History (Vulnerable)</title>
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        max-width: 800px;
+        margin: 24px auto;
+        padding: 0 16px;
+      }
+      h2 {
+        border-bottom: 2px solid #c00;
+        padding-bottom: 6px;
+        color: #c00;
+      }
+      .banner {
+        background: #fff0f0;
+        border: 1px solid #c00;
+        padding: 10px 14px;
+        margin-bottom: 16px;
+        font-size: 13px;
+      }
+      .controls {
+        margin-bottom: 16px;
+      }
+      button {
+        margin-right: 8px;
+        padding: 6px 14px;
+        cursor: pointer;
+      }
+      #clearBtn {
+        background: #c00;
+        color: #fff;
+        border: none;
+        border-radius: 3px;
+      }
+      #refreshBtn {
+        border: 1px solid #999;
+        border-radius: 3px;
+        background: #f5f5f5;
+      }
+      .entry {
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+        background: #fafafa;
+      }
+      .entry-meta {
+        font-size: 11px;
+        color: #666;
+        margin-bottom: 4px;
+      }
+      .entry-url {
+        font-size: 12px;
+        color: #0055cc;
+        word-break: break-all;
+        margin-bottom: 6px;
+      }
+      .entry-summary {
+        white-space: pre-wrap;
+        font-size: 13px;
+      }
+      #status {
+        font-style: italic;
+        color: #555;
+        margin-top: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Summary History — Vulnerable Extension</h2>
+    <div class="banner">
+      <strong>WARNING:</strong> This history is accessible to any web page via
+      <code>window.postMessage</code>. This page exists to show what data is at
+      risk.
+    </div>
+    <div class="controls">
+      <button id="refreshBtn">Refresh</button>
+      <button id="clearBtn">Clear History</button>
+    </div>
+    <div id="entries"></div>
+    <div id="status">Loading…</div>
+    <script src="options.js"></script>
+  </body>
+</html>
