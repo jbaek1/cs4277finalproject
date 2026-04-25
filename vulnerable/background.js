@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message?.type === "SUMMARIZE_FROM_CONTENT") {
     const summary = summarizeText(message.payload?.text ?? "");
     const entry = {
-      url: sender.tab?.url || "unknown",
+      url: message.payload?.url || sender.tab?.url || "unknown",
       createdAt: new Date().toISOString(),
       summary
     };

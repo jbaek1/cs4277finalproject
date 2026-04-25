@@ -1,10 +1,6 @@
-async function getActiveTabId() {
+async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return tab?.id;
-}
-
-function askContentScript(tabId, type) {
-  return chrome.tabs.sendMessage(tabId, { type });
+  return tab;
 }
 
 function formatHistory(history) {
@@ -19,14 +15,14 @@ function formatHistory(history) {
 
 document.getElementById("summarizeBtn").addEventListener("click", async () => {
   const output = document.getElementById("output");
-  const tabId = await getActiveTabId();
-  if (!tabId) {
+  const tab = await getActiveTab();
+  if (!tab?.id) {
     output.textContent = "No active tab found.";
     return;
   }
 
   const [{ result }] = await chrome.scripting.executeScript({
-    target: { tabId },
+    target: { tabId: tab.id },
     func: () => {
       const visible = document.body?.innerText || "";
       const hiddenValues = Array.from(
@@ -37,7 +33,7 @@ document.getElementById("summarizeBtn").addEventListener("click", async () => {
   });
 
   chrome.runtime.sendMessage(
-    { type: "SUMMARIZE_FROM_CONTENT", payload: { text: result } },
+    { type: "SUMMARIZE_FROM_CONTENT", payload: { text: result, url: tab.url } },
     (response) => {
       output.textContent = response?.ok
         ? response.summary

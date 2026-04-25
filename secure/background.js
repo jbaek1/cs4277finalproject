@@ -23,7 +23,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     const text = message.payload?.text ?? "";
     const summary = summarizeText(text);
     const entry = {
-      url: sender.tab?.url || "unknown",
+      url: message.payload?.url || sender.tab?.url || "unknown",
       createdAt: new Date().toISOString(),
       summary
     };
@@ -34,7 +34,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 
   // Only extension UI should access history.
-  if (message?.type === "GET_HISTORY_FOR_POPUP" && sender.id === chrome.runtime.id) {
+  if (message?.type === "GET_HISTORY_FOR_POPUP" && !sender.tab) {
     getHistory()
       .then((history) => sendResponse({ ok: true, history }))
       .catch((err) => sendResponse({ ok: false, error: String(err) }));

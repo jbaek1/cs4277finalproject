@@ -1,6 +1,6 @@
-async function getActiveTabId() {
+async function getActiveTab() {
   const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-  return tab?.id;
+  return tab;
 }
 
 function formatHistory(history) {
@@ -15,13 +15,13 @@ function formatHistory(history) {
 
 document.getElementById("summarizeBtn").addEventListener("click", async () => {
   const output = document.getElementById("output");
-  const tabId = await getActiveTabId();
-  if (!tabId) {
+  const tab = await getActiveTab();
+  if (!tab?.id) {
     output.textContent = "No active tab found.";
     return;
   }
 
-  chrome.tabs.sendMessage(tabId, { type: "GET_SELECTED_TEXT" }, (selectionRes) => {
+  chrome.tabs.sendMessage(tab.id, { type: "GET_SELECTED_TEXT" }, (selectionRes) => {
     if (!selectionRes?.ok) {
       output.textContent = selectionRes?.error || "Could not read selected text.";
       return;
@@ -30,7 +30,7 @@ document.getElementById("summarizeBtn").addEventListener("click", async () => {
     chrome.runtime.sendMessage(
       {
         type: "SUMMARIZE_SELECTED_TEXT",
-        payload: { text: selectionRes.text }
+        payload: { text: selectionRes.text, url: tab.url }
       },
       (summaryRes) => {
         output.textContent = summaryRes?.ok
