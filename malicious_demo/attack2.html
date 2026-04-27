@@ -1,0 +1,497 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <title>SecureBank — My Account</title>
+    <style>
+      /* ═══════════════════════════════════════════════════════════
+         Mock bank portal — looks realistic but contains test data
+         embedded in visible text AND hidden DOM elements.
+         ═══════════════════════════════════════════════════════════ */
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      body {
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: #f0f2f5;
+        color: #1a1a2e;
+        min-height: 100vh;
+      }
+
+      /* ── Top navigation bar ────────────────────────────────── */
+      .navbar {
+        background: linear-gradient(135deg, #0a1628 0%, #1a2744 100%);
+        color: #fff;
+        padding: 14px 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 2px 12px rgba(0,0,0,.25);
+      }
+      .navbar .logo {
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: .5px;
+      }
+      .navbar .logo span { color: #4fc3f7; }
+      .navbar .user-info {
+        font-size: 13px;
+        opacity: .85;
+      }
+
+      /* ── Page container ────────────────────────────────────── */
+      .container {
+        max-width: 960px;
+        margin: 0 auto;
+        padding: 28px 24px 60px;
+      }
+      h1 {
+        font-size: 22px;
+        margin-bottom: 4px;
+      }
+      .subtitle {
+        color: #666;
+        font-size: 13px;
+        margin-bottom: 24px;
+      }
+
+      /* ── Card layout ───────────────────────────────────────── */
+      .card-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+      .card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 22px 26px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        border: 1px solid #e4e7ec;
+      }
+      .card h2 {
+        font-size: 14px;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        color: #888;
+        margin-bottom: 12px;
+      }
+      .card .value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #0d47a1;
+      }
+      .card .detail {
+        font-size: 13px;
+        color: #555;
+        margin-top: 6px;
+        line-height: 1.5;
+      }
+
+      /* ── Table ─────────────────────────────────────────────── */
+      .txn-table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #fff;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        margin-bottom: 28px;
+      }
+      .txn-table th {
+        background: #f7f8fa;
+        text-align: left;
+        padding: 12px 18px;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: .6px;
+        color: #777;
+        border-bottom: 1px solid #e4e7ec;
+      }
+      .txn-table td {
+        padding: 12px 18px;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+      }
+      .txn-table tr:last-child td { border-bottom: none; }
+
+      /* ── Settings / "Change Password" form ─────────────────── */
+      .settings-card {
+        background: #fff;
+        border-radius: 12px;
+        padding: 24px 28px;
+        box-shadow: 0 1px 4px rgba(0,0,0,.08);
+        border: 1px solid #e4e7ec;
+        margin-bottom: 28px;
+      }
+      .settings-card h2 {
+        font-size: 16px;
+        margin-bottom: 16px;
+      }
+      .form-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .form-row label {
+        width: 160px;
+        font-size: 13px;
+        color: #555;
+      }
+      .form-row input {
+        flex: 1;
+        padding: 8px 12px;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .save-btn {
+        background: #0d47a1;
+        color: #fff;
+        border: none;
+        padding: 10px 24px;
+        border-radius: 6px;
+        font-size: 14px;
+        cursor: pointer;
+        margin-top: 4px;
+      }
+      .save-btn:hover { background: #1565c0; }
+
+      /* ── Blurred / "masked" sensitive row ───────────────────── */
+      .blurred {
+        filter: blur(4px);
+        user-select: none;
+        pointer-events: none;
+      }
+
+      /* ── Attack demo panel ─────────────────────────────────── */
+      .demo-section {
+        background: #fff;
+        border: 2px dashed #d32f2f;
+        border-radius: 12px;
+        padding: 24px 28px;
+        margin-bottom: 28px;
+      }
+      .demo-section h2 {
+        color: #d32f2f;
+        font-size: 16px;
+        margin-bottom: 6px;
+      }
+      .demo-section p {
+        font-size: 13px;
+        color: #666;
+        margin-bottom: 16px;
+        line-height: 1.5;
+      }
+
+      #attack2-btn {
+        background: #d32f2f;
+        color: #fff;
+        border: none;
+        padding: 12px 28px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background .15s;
+      }
+      #attack2-btn:hover { background: #b71c1c; }
+      #attack2-btn:disabled { background: #999; cursor: default; }
+      #attack2-status {
+        font-size: 13px;
+        color: #555;
+        margin-top: 10px;
+      }
+
+      /* ── Exfiltrated data overlay ──────────────────────────── */
+      #exfil-panel {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100vw; height: 100vh;
+        background: rgba(0,0,0,.7);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+      }
+      #exfil-panel.visible {
+        display: flex;
+      }
+      #exfil-inner {
+        background: #111;
+        color: #39ff14;
+        font-family: "Fira Code", "Cascadia Code", "Courier New", monospace;
+        font-size: 12px;
+        width: 640px;
+        max-height: 80vh;
+        overflow-y: auto;
+        border: 2px solid #f44;
+        border-radius: 10px;
+        padding: 24px;
+        position: relative;
+      }
+      #exfil-inner h3 {
+        color: #ff5252;
+        font-size: 15px;
+        text-transform: uppercase;
+        letter-spacing: 1.5px;
+        margin-bottom: 6px;
+      }
+      #exfil-inner .subtitle-tag {
+        color: #999;
+        font-size: 11px;
+        margin-bottom: 18px;
+        display: block;
+      }
+      #exfil-output {
+        white-space: pre-wrap;
+        word-break: break-word;
+        line-height: 1.55;
+      }
+      .highlight-bad {
+        color: #ff5252;
+        font-weight: bold;
+      }
+      #close-exfil {
+        position: absolute;
+        top: 12px;
+        right: 16px;
+        background: #333;
+        color: #fff;
+        border: 1px solid #666;
+        padding: 4px 14px;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 12px;
+      }
+      #close-exfil:hover { background: #555; }
+
+      /* ── Hidden elements (sensitive tokens embedded in DOM) ── */
+      .hidden-data { display: none !important; }
+    </style>
+  </head>
+  <body>
+
+    <!-- ═══════════ NAV BAR ═══════════ -->
+    <div class="navbar">
+      <div class="logo">Secure<span>Bank</span> Online</div>
+      <div class="user-info">Welcome, <strong>Jane Doe</strong> &bull; Last login: April 27, 2026 10:14 AM</div>
+    </div>
+
+    <!-- ═══════════ PAGE CONTENT ═══════════ -->
+    <div class="container">
+      <h1>Account Dashboard</h1>
+      <p class="subtitle">View your balances, recent activity, and account settings below.</p>
+
+      <!-- Account summary cards — VISIBLE sensitive data -->
+      <div class="card-grid">
+        <div class="card">
+          <h2>Checking Account</h2>
+          <div class="value">$24,817.43</div>
+          <div class="detail">Account #: 4821-0039-7713<br>Routing #: 091000019</div>
+        </div>
+        <div class="card">
+          <h2>Savings Account</h2>
+          <div class="value">$103,442.91</div>
+          <div class="detail">Account #: 4821-0039-8856<br>APY: 4.25%</div>
+        </div>
+        <div class="card">
+          <h2>Credit Card</h2>
+          <div class="value">$2,340.00</div>
+          <div class="detail">Card ending in 4242<br>Available credit: $17,660</div>
+        </div>
+        <div class="card">
+          <h2>Account Holder</h2>
+          <div class="value" style="font-size:20px;">Jane Doe</div>
+          <div class="detail">
+            SSN: <span class="blurred">***-**-6789</span><br>
+            DOB: 03/15/1988<br>
+            Email: jane.doe@email.com
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent transactions table -->
+      <table class="txn-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Description</th>
+            <th>Amount</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Apr 26</td><td>Direct Deposit — Employer Payroll</td><td>+$3,214.00</td></tr>
+          <tr><td>Apr 25</td><td>Transfer to Savings</td><td>-$500.00</td></tr>
+          <tr><td>Apr 24</td><td>Amazon.com Purchase</td><td>-$89.99</td></tr>
+          <tr><td>Apr 23</td><td>Electric Utility — ConEdison</td><td>-$142.37</td></tr>
+          <tr><td>Apr 22</td><td>ATM Withdrawal</td><td>-$200.00</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Settings card with password and security Q&A ────── -->
+      <div class="settings-card">
+        <h2>🔒 Security Settings</h2>
+        <div class="form-row">
+          <label>Current Password</label>
+          <input type="password" id="current-pw" name="current_password" value="MyS3cretBanking!">
+        </div>
+        <div class="form-row">
+          <label>New Password</label>
+          <input type="password" id="new-pw" name="new_password" value="">
+        </div>
+        <div class="form-row">
+          <label>Security Question</label>
+          <input type="text" id="sec-q" name="security_question" value="What is your mother's maiden name?">
+        </div>
+        <div class="form-row">
+          <label>Security Answer</label>
+          <input type="password" id="sec-a" name="security_answer" value="Fitzgerald">
+        </div>
+        <button class="save-btn" onclick="return false;">Save Changes</button>
+      </div>
+
+      <!-- ═══════════ HIDDEN DOM ELEMENTS ═══════════
+           These are never rendered but live in the DOM.
+           A vulnerable extension scanning inputs will find them.  -->
+      <input type="hidden" name="csrf_token" value="x7G9kL2mNpQ4rS8vW1zA3bC5dE7fH0jK">
+      <input type="hidden" name="session_id" value="sess_8f4e2a1b-d6c3-49e7-a0f5-3c7d9e1b2a4f">
+      <input type="hidden" name="internal_ssn" value="123-45-6789">
+      <input type="hidden" name="api_key" value="sk_live_4eC39HqLyjWDarjtT1zdp7dc">
+      <input type="hidden" name="account_token" value="tok_visa_4242424242424242">
+      <div class="hidden-data" data-user-id="USR-90281" data-risk-score="low">
+        Internal user record — not displayed.
+      </div>
+
+
+      <!-- ═══════════ DEMO CONTROLS ═══════════ -->
+      <div class="demo-section">
+        <h2>⚠️ Attack 2 Demo — Over-Collection of Sensitive DOM Data</h2>
+        <p>
+          Click the button below to simulate what happens when the <strong>vulnerable</strong>
+          extension summarizes this page. It will collect <em>all visible text</em> (account
+          numbers, balances, names) <strong>and</strong> scrape hidden input values (passwords,
+          CSRF tokens, session IDs, SSNs, API keys)&nbsp;— even though some are masked with
+          <code>type="password"</code> or <code>display:none</code>.
+        </p>
+        <button id="attack2-btn">Run Attack 2: Over-Collect Page Content</button>
+        <div id="attack2-status"></div>
+      </div>
+    </div><!-- /.container -->
+
+
+    <!-- ═══════════ EXFILTRATION PANEL ═══════════ -->
+    <div id="exfil-panel">
+      <div id="exfil-inner">
+        <button id="close-exfil">✕ Close</button>
+        <h3>🔓 Data Captured by Vulnerable Extension</h3>
+        <span class="subtitle-tag">This is what the extension stores in its summary history</span>
+        <div id="exfil-output"></div>
+      </div>
+    </div>
+
+
+    <script>
+      /* ═══════════════════════════════════════════════════════════
+         Attack 2 Demo Script
+         ─────────────────────
+         Simulates the vulnerable extension's collectEntireDomText()
+         function locally, so the demo works even without loading
+         the extension. Also works WITH the extension via postMessage.
+         ═══════════════════════════════════════════════════════════ */
+
+      const STATUS = document.getElementById("attack2-status");
+      const PANEL  = document.getElementById("exfil-panel");
+      const OUTPUT = document.getElementById("exfil-output");
+
+      /* ── Replicate the vulnerable content script's data collection ── */
+      function collectEntireDomText() {
+        // 1. Grab all visible innerText (includes account numbers, balances, etc.)
+        const visible = document.body?.innerText || "";
+
+        // 2. Scrape every input / textarea value — even hidden & password fields
+        const inputValues = Array.from(
+          document.querySelectorAll("input, textarea")
+        ).map((el) => {
+          const name = el.name || el.id || "field";
+          const val  = el.value || "";
+          const typ  = el.type || "text";
+          return `[${typ}] ${name} = ${val}`;
+        });
+
+        return { visible, inputs: inputValues };
+      }
+
+      /* ── Highlight sensitive values in the output ── */
+      function highlightSensitive(text) {
+        // Patterns that should alarm the viewer
+        const patterns = [
+          /MyS3cretBanking!/g,
+          /Fitzgerald/g,
+          /123-45-6789/g,
+          /x7G9kL2mNpQ4rS8vW1zA3bC5dE7fH0jK/g,
+          /sess_8f4e2a1b-d6c3-49e7-a0f5-3c7d9e1b2a4f/g,
+          /sk_live_4eC39HqLyjWDarjtT1zdp7dc/g,
+          /tok_visa_4242424242424242/g,
+          /4821-0039-7713/g,
+          /4821-0039-8856/g,
+          /091000019/g,
+          /\$24,817\.43/g,
+          /\$103,442\.91/g,
+          /jane\.doe@email\.com/g
+        ];
+        let html = escapeHtml(text);
+        patterns.forEach((pat) => {
+          html = html.replace(pat, (m) => `<span class="highlight-bad">${m}</span>`);
+        });
+        return html;
+      }
+
+      function escapeHtml(str) {
+        return str.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+      }
+
+      /* ── Button handler ── */
+      document.getElementById("attack2-btn").addEventListener("click", () => {
+        const btn = document.getElementById("attack2-btn");
+        btn.disabled = true;
+        STATUS.textContent = "Collecting DOM content (visible + hidden)…";
+
+        // Small delay for dramatic effect
+        setTimeout(() => {
+          const { visible, inputs } = collectEntireDomText();
+
+          // Build output
+          let raw = "";
+          raw += "══════════════════════════════════════\n";
+          raw += "  VISIBLE PAGE TEXT (innerText)\n";
+          raw += "══════════════════════════════════════\n\n";
+          raw += visible.slice(0, 1200);
+          if (visible.length > 1200) raw += "\n… [truncated for display]\n";
+
+          raw += "\n\n══════════════════════════════════════\n";
+          raw += "  HIDDEN/INPUT FIELD VALUES\n";
+          raw += "══════════════════════════════════════\n\n";
+          raw += inputs.join("\n");
+
+          raw += "\n\n══════════════════════════════════════\n";
+          raw += "  ⚠  ALL OF THE ABOVE WOULD BE STORED\n";
+          raw += "     IN THE EXTENSION'S SUMMARY HISTORY\n";
+          raw += "══════════════════════════════════════\n";
+
+          OUTPUT.innerHTML = highlightSensitive(raw);
+          PANEL.classList.add("visible");
+          STATUS.textContent = `Over-collection complete — ${inputs.length} input fields scraped, including passwords & tokens.`;
+          btn.disabled = false;
+        }, 600);
+      });
+
+      /* ── Close panel ── */
+      document.getElementById("close-exfil").addEventListener("click", () => {
+        PANEL.classList.remove("visible");
+      });
+      PANEL.addEventListener("click", (e) => {
+        if (e.target === PANEL) PANEL.classList.remove("visible");
+      });
+    </script>
+  </body>
+</html>
