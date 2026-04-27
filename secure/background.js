@@ -45,9 +45,22 @@ function summarizeText(rawText) {
   const sanitized = sanitizeSensitiveData(rawText);
   const compact = sanitized.replace(/\s+/g, " ").trim();
   if (!compact) return "No content found to summarize.";
+
   const maxLen = 320;
-  return compact.length <= maxLen ? compact : `${compact.slice(0, maxLen)}...`;
+  let summary = compact.length <= maxLen ? compact : `${compact.slice(0, maxLen)}...`;
+
+  // 2. Append redaction notice if anything was filtered
+  if (redactedCount > 0) {
+    summary += `\n\n⚠ ${redactedCount} sensitive value(s) were automatically redacted.`;
+  }
+
+  return summary;
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Storage helpers
+   ═══════════════════════════════════════════════════════════════════ */
 
 async function getHistory() {
   const data = await chrome.storage.local.get(HISTORY_KEY);
@@ -59,6 +72,11 @@ async function saveHistoryEntry(entry) {
   history.unshift(entry);
   await chrome.storage.local.set({ [HISTORY_KEY]: history.slice(0, 100) });
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════
+   Message handler
+   ═══════════════════════════════════════════════════════════════════ */
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   // Patch: only SUMMARIZE_SELECTED_TEXT is accepted — no full-DOM path exists.
