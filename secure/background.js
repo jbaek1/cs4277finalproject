@@ -47,13 +47,7 @@ function summarizeText(rawText) {
   if (!compact) return "No content found to summarize.";
 
   const maxLen = 320;
-  let summary = compact.length <= maxLen ? compact : `${compact.slice(0, maxLen)}...`;
-
-  // 2. Append redaction notice if anything was filtered
-  if (redactedCount > 0) {
-    summary += `\n\n⚠ ${redactedCount} sensitive value(s) were automatically redacted.`;
-  }
-
+  const summary = compact.length <= maxLen ? compact : `${compact.slice(0, maxLen)}...`;
   return summary;
 }
 
