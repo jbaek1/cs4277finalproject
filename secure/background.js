@@ -1,86 +1,48 @@
 const HISTORY_KEY = "summaryHistory";
 
-/* ═══════════════════════════════════════════════════════════════════
-   DEFENSE: Sensitive-Content Sanitizer (Defense-in-Depth for Attack 2)
-   ──────────────────────────────────────────────────────────────────
-   Even though the secure extension only summarizes user-selected text,
-   a user might accidentally select sensitive data.  This layer
-   automatically detects and redacts common sensitive patterns before
-   the summary is stored in history.
-   ═══════════════════════════════════════════════════════════════════ */
-
+/*
+ * ── PATCH: Sensitive-element filtering (Attack 2 mitigation) ────────────────
+ *
+ * sanitizeSensitiveData() scrubs common sensitive patterns from any text
+ * before it is stored or summarized. This is a last-resort defense-in-depth
+ * layer that runs in the background worker, complementing the primary patch
+ * (selection-only input in content.js / popup.js).
+ *
+ * Patterns redacted:
+ *   • JWT / Bearer tokens          • SSNs  (###-##-####)
+ *   • Credit / debit card numbers  • CSRF / session / API token key-value pairs
+ *   • Bank routing & account nums  • Hex secret IDs (32+ hex chars)
+ *   • Email addresses              • Passwords / pins embedded in key=value text
+ * ─────────────────────────────────────────────────────────────────────────── */
 const SENSITIVE_PATTERNS = [
-  // Social Security Numbers  (123-45-6789, 123 45 6789, 123456789)
-  { regex: /\b\d{3}[-\s]?\d{2}[-\s]?\d{4}\b/g,       label: "[SSN REDACTED]" },
-
-  // Credit / debit card numbers  (16-digit, with optional spaces/dashes)
-  { regex: /\b(?:\d{4}[-\s]?){3}\d{4}\b/g,            label: "[CARD# REDACTED]" },
-
-  // API keys / secret keys  (sk_live_..., sk_test_..., ak_..., etc.)
-  { regex: /\b(sk|ak|pk)_(live|test|prod)_[A-Za-z0-9]{16,}\b/g,
-                                                        label: "[API-KEY REDACTED]" },
-
-  // Session IDs  (sess_...)
-  { regex: /\bsess_[A-Za-z0-9\-]{8,}\b/g,             label: "[SESSION REDACTED]" },
-
-  // Bearer / auth tokens
-  { regex: /\b(Bearer\s+)[A-Za-z0-9\-_.~+\/]{20,}/gi, label: "[AUTH-TOKEN REDACTED]" },
-
-  // CSRF tokens  (long hex/base64 strings preceded by "csrf" or "token")
-  { regex: /\b(csrf[_\-]?token\s*[:=]\s*)[A-Za-z0-9+\/=]{16,}/gi,
-                                                        label: "$1[CSRF REDACTED]" },
-
-  // Generic tokens  (tok_...)
-  { regex: /\btok_[A-Za-z0-9_]{8,}\b/g,               label: "[TOKEN REDACTED]" },
-
-  // Passwords appearing as "password = ..." or "password: ..."
-  { regex: /(password\s*[:=]\s*)(\S+)/gi,              label: "$1[PASSWORD REDACTED]" },
-
+  // JWT tokens (three base64url segments)
+  { re: /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g, label: "[JWT_REDACTED]" },
+  // SSN  ###-##-####
+  { re: /\b\d{3}-\d{2}-\d{4}\b/g, label: "[SSN_REDACTED]" },
+  // Credit / debit card  (4 groups of 4 digits, optional dashes/spaces)
+  { re: /\b(?:\d{4}[\s-]?){3}\d{4}\b/g, label: "[CARD_REDACTED]" },
+  // Routing numbers (9-digit, standalone)
+  { re: /\b0[2-9]\d{7}\b/g, label: "[ROUTING_REDACTED]" },
+  // CSRF, session, auth, pin, otp, secret key=value pairs
+  { re: /(?:csrf|session|token|auth|api[_-]?key|pin|otp|secret|wire_tok)[=:\s]+[\w.\-]{6,}/gi, label: "[TOKEN_REDACTED]" },
+  // Password key=value pairs
+  { re: /(?:password|passwd|pwd)[=:\s]+\S+/gi, label: "[PASSWORD_REDACTED]" },
+  // 32+ hex character secrets (SHA-like IDs, internal tokens)
+  { re: /\b[0-9a-f]{32,}\b/gi, label: "[HEX_SECRET_REDACTED]" },
   // Email addresses
-  { regex: /\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Z]{2,}\b/gi,
-                                                        label: "[EMAIL REDACTED]" },
-
-  // Routing numbers (9 digits preceded by "routing")
-  { regex: /(routing\s*#?\s*[:=]?\s*)\d{9}\b/gi,      label: "$1[ROUTING# REDACTED]" },
-
-  // Account numbers (common patterns like ####-####-####)
-  { regex: /\b\d{4}-\d{4}-\d{4}\b/g,                  label: "[ACCT# REDACTED]" },
-
-  // Dollar amounts over $1,000 (financial data)
-  { regex: /\$\d{1,3}(,\d{3})+(\.\d{2})?/g,           label: "[AMOUNT REDACTED]" }
+  { re: /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/g, label: "[EMAIL_REDACTED]" }
 ];
 
-/**
- * Scan text for sensitive patterns and replace them with safe labels.
- * Returns { sanitized, redactedCount }.
- */
-function sanitizeSensitiveContent(text) {
+function sanitizeSensitiveData(text) {
   let sanitized = text;
-  let redactedCount = 0;
-
-  for (const { regex, label } of SENSITIVE_PATTERNS) {
-    // Reset lastIndex for global regexes
-    regex.lastIndex = 0;
-    const before = sanitized;
-    sanitized = sanitized.replace(regex, (...args) => {
-      redactedCount++;
-      // If label uses backreferences ($1), handle via replacement string
-      return label;
-    });
+  for (const { re, label } of SENSITIVE_PATTERNS) {
+    sanitized = sanitized.replace(re, label);
   }
-
-  return { sanitized, redactedCount };
+  return sanitized;
 }
 
-
-/* ═══════════════════════════════════════════════════════════════════
-   Core summarization (unchanged logic, but now runs sanitizer)
-   ═══════════════════════════════════════════════════════════════════ */
-
 function summarizeText(rawText) {
-  // 1. Sanitize before summarizing
-  const { sanitized, redactedCount } = sanitizeSensitiveContent(rawText);
-
+  const sanitized = sanitizeSensitiveData(rawText);
   const compact = sanitized.replace(/\s+/g, " ").trim();
   if (!compact) return "No content found to summarize.";
 
@@ -117,6 +79,7 @@ async function saveHistoryEntry(entry) {
    ═══════════════════════════════════════════════════════════════════ */
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  // Patch: only SUMMARIZE_SELECTED_TEXT is accepted — no full-DOM path exists.
   if (message?.type === "SUMMARIZE_SELECTED_TEXT") {
     const text = message.payload?.text ?? "";
     const summary = summarizeText(text);

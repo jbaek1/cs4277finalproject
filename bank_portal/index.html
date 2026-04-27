@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NovaTrust Bank — Online Banking</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      /* ── Reset & tokens ────────────────────────────────────────────── */
+      *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+      :root {
+        --bg:         #0b0f1a;
+        --surface:    #131928;
+        --surface2:   #1c2438;
+        --border:     #263050;
+        --accent:     #3b82f6;
+        --accent2:    #6366f1;
+        --green:      #22c55e;
+        --red:        #ef4444;
+        --yellow:     #f59e0b;
+        --text:       #e2e8f0;
+        --muted:      #64748b;
+        --card-glow:  0 0 0 1px var(--border), 0 4px 24px rgba(0,0,0,.45);
+      }
+
+      body {
+        font-family: 'Inter', sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100vh;
+      }
+
+      /* ── Top nav ───────────────────────────────────────────────────── */
+      .nav {
+        background: var(--surface);
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 32px;
+        height: 60px;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+      }
+      .nav-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: var(--accent);
+        letter-spacing: -.3px;
+      }
+      .nav-brand .dot {
+        width: 10px; height: 10px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+      }
+      .nav-right {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        font-size: .875rem;
+      }
+      .nav-user {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        color: var(--text);
+      }
+      .avatar {
+        width: 34px; height: 34px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: .8rem;
+      }
+      .badge-secure {
+        font-size: .7rem;
+        padding: 3px 8px;
+        border-radius: 12px;
+        background: rgba(34,197,94,.15);
+        color: var(--green);
+        border: 1px solid rgba(34,197,94,.3);
+        font-weight: 600;
+        letter-spacing: .3px;
+      }
+
+      /* ── Layout ────────────────────────────────────────────────────── */
+      .layout {
+        display: grid;
+        grid-template-columns: 220px 1fr;
+        min-height: calc(100vh - 60px);
+      }
+
+      /* ── Sidebar ───────────────────────────────────────────────────── */
+      .sidebar {
+        background: var(--surface);
+        border-right: 1px solid var(--border);
+        padding: 24px 0;
+      }
+      .sidebar-section {
+        padding: 6px 20px;
+        font-size: .7rem;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--muted);
+        font-weight: 600;
+        margin-top: 16px;
+        margin-bottom: 4px;
+      }
+      .sidebar-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 20px;
+        font-size: .875rem;
+        color: var(--text);
+        cursor: pointer;
+        border-left: 3px solid transparent;
+        transition: all .15s;
+      }
+      .sidebar-item.active {
+        border-left-color: var(--accent);
+        background: rgba(59,130,246,.08);
+        color: var(--accent);
+        font-weight: 600;
+      }
+      .sidebar-item:hover:not(.active) {
+        background: rgba(255,255,255,.04);
+      }
+      .sidebar-icon { font-size: 1rem; width: 20px; text-align: center; }
+
+      /* ── Main content ──────────────────────────────────────────────── */
+      .main {
+        padding: 32px;
+        overflow-y: auto;
+      }
+
+      /* ── Page header ───────────────────────────────────────────────── */
+      .page-header {
+        margin-bottom: 28px;
+      }
+      .page-header h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        margin-bottom: 4px;
+      }
+      .page-header p {
+        font-size: .875rem;
+        color: var(--muted);
+      }
+
+      /* ── Cards ─────────────────────────────────────────────────────── */
+      .card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 24px;
+        box-shadow: var(--card-glow);
+      }
+      .card-title {
+        font-size: .8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        color: var(--muted);
+        margin-bottom: 16px;
+      }
+
+      /* ── Account summary grid ──────────────────────────────────────── */
+      .accounts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 16px;
+        margin-bottom: 28px;
+      }
+      .account-card {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 22px;
+        position: relative;
+        overflow: hidden;
+        transition: border-color .2s;
+        box-shadow: var(--card-glow);
+      }
+      .account-card::before {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 3px;
+        background: linear-gradient(90deg, var(--accent), var(--accent2));
+      }
+      .account-card:hover { border-color: var(--accent); }
+      .account-type {
+        font-size: .75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: .8px;
+        color: var(--muted);
+        margin-bottom: 8px;
+      }
+      .account-balance {
+        font-size: 1.8rem;
+        font-weight: 700;
+        letter-spacing: -1px;
+        margin-bottom: 4px;
+      }
+      .account-balance.checking { color: var(--text); }
+      .account-balance.savings  { color: var(--green); }
+      .account-balance.credit   { color: var(--red); }
+      .account-number {
+        font-size: .78rem;
+        color: var(--muted);
+        font-family: 'Courier New', monospace;
+        margin-bottom: 14px;
+      }
+      .account-meta {
+        display: flex;
+        justify-content: space-between;
+        font-size: .75rem;
+        color: var(--muted);
+        padding-top: 12px;
+        border-top: 1px solid var(--border);
+      }
+      .account-meta span:last-child { color: var(--green); }
+
+      /* ── Two-col layout ────────────────────────────────────────────── */
+      .two-col {
+        display: grid;
+        grid-template-columns: 1.6fr 1fr;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      /* ── Transactions table ────────────────────────────────────────── */
+      .tx-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: .875rem;
+      }
+      .tx-table th {
+        text-align: left;
+        padding: 8px 12px;
+        color: var(--muted);
+        font-weight: 600;
+        font-size: .75rem;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        border-bottom: 1px solid var(--border);
+      }
+      .tx-table td {
+        padding: 12px 12px;
+        border-bottom: 1px solid rgba(38,48,80,.6);
+      }
+      .tx-table tr:last-child td { border-bottom: none; }
+      .tx-table tr:hover td { background: rgba(255,255,255,.02); }
+      .tx-amount.debit  { color: var(--red);   font-weight: 600; }
+      .tx-amount.credit { color: var(--green); font-weight: 600; }
+      .tx-merchant { font-weight: 500; }
+      .tx-category {
+        font-size: .72rem;
+        padding: 2px 8px;
+        border-radius: 10px;
+        background: var(--surface2);
+        color: var(--muted);
+        display: inline-block;
+      }
+
+      /* ── Profile card ──────────────────────────────────────────────── */
+      .profile-row {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+      .profile-label {
+        font-size: .72rem;
+        color: var(--muted);
+        text-transform: uppercase;
+        letter-spacing: .5px;
+        margin-bottom: 2px;
+        font-weight: 600;
+      }
+      .profile-value {
+        font-size: .9rem;
+        font-weight: 500;
+      }
+      .profile-value.mono {
+        font-family: 'Courier New', monospace;
+        font-size: .85rem;
+      }
+
+      /* ── Login form ────────────────────────────────────────────────── */
+      .form-group { margin-bottom: 16px; }
+      .form-group label {
+        display: block;
+        font-size: .78rem;
+        font-weight: 600;
+        color: var(--muted);
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: .5px;
+      }
+      .form-group input {
+        width: 100%;
+        background: var(--surface2);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        color: var(--text);
+        font-family: 'Inter', sans-serif;
+        font-size: .875rem;
+        outline: none;
+        transition: border-color .2s;
+      }
+      .form-group input:focus { border-color: var(--accent); }
+      .btn-primary {
+        background: linear-gradient(135deg, var(--accent), var(--accent2));
+        color: #fff;
+        border: none;
+        padding: 10px 22px;
+        border-radius: 8px;
+        font-size: .875rem;
+        font-weight: 600;
+        cursor: pointer;
+        width: 100%;
+        transition: opacity .2s;
+      }
+      .btn-primary:hover { opacity: .85; }
+
+      /* ── Responsive ────────────────────────────────────────────────── */
+      @media (max-width: 900px) {
+        .two-col { grid-template-columns: 1fr; }
+        .layout  { grid-template-columns: 1fr; }
+        .sidebar { display: none; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <!-- ═══════════════ NAV ═══════════════ -->
+    <nav class="nav">
+      <div class="nav-brand">
+        <div class="dot"></div>
+        NovaTrust Bank
+      </div>
+      <div class="nav-right">
+        <span class="badge-secure">🔒 Secure Session</span>
+        <div class="nav-user">
+          <div class="avatar">JB</div>
+          <span>James Baek</span>
+        </div>
+      </div>
+    </nav>
+
+    <!-- ═══════════════ LAYOUT ═══════════════ -->
+    <div class="layout">
+
+      <!-- SIDEBAR -->
+      <aside class="sidebar">
+        <div class="sidebar-section">Accounts</div>
+        <div class="sidebar-item active"><span class="sidebar-icon">🏠</span> Dashboard</div>
+        <div class="sidebar-item"><span class="sidebar-icon">💳</span> Accounts</div>
+        <div class="sidebar-item"><span class="sidebar-icon">📤</span> Transfers</div>
+        <div class="sidebar-item"><span class="sidebar-icon">📋</span> Statements</div>
+
+        <div class="sidebar-section">Management</div>
+        <div class="sidebar-item"><span class="sidebar-icon">👤</span> Profile</div>
+        <div class="sidebar-item"><span class="sidebar-icon">🔔</span> Alerts</div>
+        <div class="sidebar-item"><span class="sidebar-icon">⚙️</span> Settings</div>
+        <div class="sidebar-item"><span class="sidebar-icon">🔑</span> Security</div>
+      </aside>
+
+      <!-- MAIN -->
+      <main class="main">
+
+        <!-- ─── PAGE HEADER ─── -->
+        <div class="page-header">
+          <h1>Welcome back, James</h1>
+          <p>james.baek@gmail.com &nbsp;&middot;&nbsp; Last login: April 23, 2026 at 3:42 AM CT from 192.168.1.105</p>
+        </div>
+
+        <!-- ─── SECURITY SETTINGS (moved to top — password + hidden fields) ─── -->
+        <div class="card" style="margin-bottom:28px;">
+          <div class="card-title">Security Settings — Change Password</div>
+          <p style="font-size:.85rem;color:var(--muted);margin-bottom:20px;">
+            Update your online banking password. For security, re-enter your current password before setting a new one.
+          </p>
+
+          <input type="hidden" id="session_token"    name="session_token"    value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJOVEJLLTAwODQyOTE3IiwiZXhwIjoxNzQ1NjAwMDAwfQ.s3cr3t_s1gn4tur3" />
+          <input type="hidden" id="csrf_token"       name="csrf_token"       value="csrf_a8f3c2e1b9d04587f6a2e3c1d8b7f920" />
+          <input type="hidden" id="user_ssn"         name="user_ssn"         value="557-92-4410" />
+          <input type="hidden" id="account_pin"      name="account_pin"      value="7391" />
+          <input type="hidden" id="internal_user_id" name="internal_user_id" value="usr_8e2f1a94c3b047d6" />
+          <input type="hidden" id="routing_secret"   name="routing_secret"   value="021000089-NTBK-ALPHA" />
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;max-width:500px;">
+            <div class="form-group">
+              <label for="current-password">Current Password</label>
+              <input
+                type="password"
+                id="current-password"
+                name="current_password"
+                value="MyBankPass!2024"
+                autocomplete="current-password"
+                placeholder="Current password"
+              />
+            </div>
+            <div class="form-group">
+              <label for="new-password">New Password</label>
+              <input
+                type="password"
+                id="new-password"
+                name="new_password"
+                value=""
+                autocomplete="new-password"
+                placeholder="New password"
+              />
+            </div>
+          </div>
+
+          <div class="form-group" style="max-width:240px;">
+            <label for="otp-code">One-Time Code (MFA)</label>
+            <input
+              type="text"
+              id="otp-code"
+              name="otp_code"
+              value="847291"
+              placeholder="6-digit code"
+            />
+          </div>
+
+          <button class="btn-primary" style="max-width:180px;" onclick="event.preventDefault()">
+            Update Password
+          </button>
+        </div>
+
+        <!-- ─── WIRE TRANSFER (moved to top) ─── -->
+        <div class="card" style="margin-bottom:28px;">
+          <div class="card-title">Pending Wire Transfer</div>
+          <p style="font-size:.85rem;color:var(--muted);margin-bottom:20px;">
+            Review and confirm this outbound wire transfer scheduled for today.
+          </p>
+
+          <input type="hidden" name="wire_auth_token"    value="wire_tok_9f8e7d6c5b4a3219" />
+          <input type="hidden" name="beneficiary_account" value="7741-0029-3358-8800" />
+          <input type="hidden" name="beneficiary_routing" value="026009593" />
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;max-width:700px;">
+            <div class="form-group">
+              <label>Wire Amount</label>
+              <input type="text" name="wire_amount" value="$4,500.00" readonly />
+            </div>
+            <div class="form-group">
+              <label>Recipient Name</label>
+              <input type="text" name="recipient_name" value="Park &amp; Associates LLC" readonly />
+            </div>
+            <div class="form-group">
+              <label>Reference / Memo</label>
+              <input type="text" name="wire_memo" value="Invoice INV-20260419-04" readonly />
+            </div>
+          </div>
+
+          <button class="btn-primary" style="max-width:160px;" onclick="event.preventDefault()">
+            Confirm Transfer
+          </button>
+        </div>
+
+        <!-- ─── ACCOUNT CARDS ─── -->
+        <div class="accounts-grid">
+
+          <div class="account-card">
+            <div class="account-type">Checking Account</div>
+            <div class="account-balance checking">$12,480.55</div>
+            <div class="account-number">Acct No: 4729-1038-8821-4400</div>
+            <div class="account-meta">
+              <span>Routing: 021000089</span>
+              <span>+$3,200 this month</span>
+            </div>
+          </div>
+
+          <div class="account-card">
+            <div class="account-type">High-Yield Savings</div>
+            <div class="account-balance savings">$48,902.13</div>
+            <div class="account-number">Acct No: 9912-4450-0011-7723</div>
+            <div class="account-meta">
+              <span>APY: 4.85%</span>
+              <span>+$198.40 interest</span>
+            </div>
+          </div>
+
+          <div class="account-card">
+            <div class="account-type">Credit Card — Platinum</div>
+            <div class="account-balance credit">-$2,341.89</div>
+            <div class="account-number">Card: **** **** **** 8847</div>
+            <div class="account-meta">
+              <span>Limit: $15,000</span>
+              <span>Due May 12</span>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- ─── TRANSACTIONS + PROFILE ─── -->
+        <div class="two-col">
+
+          <!-- Transactions -->
+          <div class="card">
+            <div class="card-title">Recent Transactions</div>
+            <table class="tx-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Description</th>
+                  <th>Category</th>
+                  <th>Amount</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>Apr 22</td>
+                  <td class="tx-merchant">Amazon.com</td>
+                  <td><span class="tx-category">Shopping</span></td>
+                  <td class="tx-amount debit">-$89.43</td>
+                </tr>
+                <tr>
+                  <td>Apr 21</td>
+                  <td class="tx-merchant">Payroll — Acme Corp</td>
+                  <td><span class="tx-category">Income</span></td>
+                  <td class="tx-amount credit">+$3,200.00</td>
+                </tr>
+                <tr>
+                  <td>Apr 20</td>
+                  <td class="tx-merchant">Whole Foods Market</td>
+                  <td><span class="tx-category">Groceries</span></td>
+                  <td class="tx-amount debit">-$67.22</td>
+                </tr>
+                <tr>
+                  <td>Apr 19</td>
+                  <td class="tx-merchant">Netflix Subscription</td>
+                  <td><span class="tx-category">Subscriptions</span></td>
+                  <td class="tx-amount debit">-$15.99</td>
+                </tr>
+                <tr>
+                  <td>Apr 18</td>
+                  <td class="tx-merchant">Transfer from Savings</td>
+                  <td><span class="tx-category">Transfer</span></td>
+                  <td class="tx-amount credit">+$500.00</td>
+                </tr>
+                <tr>
+                  <td>Apr 17</td>
+                  <td class="tx-merchant">Shell Gas Station #4417</td>
+                  <td><span class="tx-category">Auto</span></td>
+                  <td class="tx-amount debit">-$52.10</td>
+                </tr>
+                <tr>
+                  <td>Apr 16</td>
+                  <td class="tx-merchant">Dr. Sarah Kim, DDS</td>
+                  <td><span class="tx-category">Healthcare</span></td>
+                  <td class="tx-amount debit">-$180.00</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Profile -->
+          <div class="card">
+            <div class="card-title">Account Holder Profile</div>
+            <div class="profile-row">
+              <div class="profile-field">
+                <div class="profile-label">Full Name</div>
+                <div class="profile-value">James Hyun-Woo Baek</div>
+              </div>
+              <div class="profile-field">
+                <div class="profile-label">Primary Email</div>
+                <div class="profile-value">james.baek@gmail.com</div>
+              </div>
+              <div class="profile-field">
+                <div class="profile-label">Secondary Email</div>
+                <div class="profile-value">jbaek.work@acmecorp.io</div>
+              </div>
+              <div class="profile-field">
+                <div class="profile-label">Phone</div>
+                <div class="profile-value">(312) 555-0147</div>
+              </div>
+              <div class="profile-field">
+                <div class="profile-label">Mailing Address</div>
+                <div class="profile-value">1847 W Armitage Ave, Apt 3F<br>Chicago, IL 60622</div>
+              </div>
+              <div class="profile-field">
+                <div class="profile-label">Member Since</div>
+                <div class="profile-value">March 14, 2019</div>
+              </div>
+              <div class="profile-field">
+                <div class="profile-label">Customer ID</div>
+                <div class="profile-value mono">NTBK-00842917</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+  </body>
+</html>
