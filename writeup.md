@@ -11,8 +11,6 @@ This project is a Chrome browser extension, built on Manifest V3, that summarize
 
 For our project, we intentionally implemented two security vulnerabilities into a "vulnerable" build of the extension, then developed a hardened "secure" build that addresses each vulnerability with targeted defenses. A set of demo pages (`malicious_demo/`) allows a user to simulate both attacks and defenses. 
 
-For our summarization we simply truncate text as the summarization text is arbitrary when displaying the security vulnerabilities and safety measures, but ideally the summarization would be using a local LLM or an external LLM API call such as Amplify.
-
 ### Extension Architecture
 
 The extension consists of three main components:
@@ -128,7 +126,7 @@ function collectEntireDomText() {
 - `<input type="password">` fields containing plaintext passwords (the `.value` property always returns the cleartext regardless of the input type).
 - `<input type="hidden">` fields containing CSRF tokens, session IDs, internal API keys, and other secrets that are never displayed to the user.
 
-Because the summarization pipeline passes this collected text directly to the background worker, which stores it in history, all of this sensitive data ends up the extension's storage. Combined with Attack 1, an attacker on a separate site could then steal this stored sensitive data remotely.
+Because the summarization pipeline passes this collected text directly to the background worker, which stores it in history, all of this sensitive data ends up in the extension's storage. Combined with Attack 1, an attacker on a separate site could then steal this stored sensitive data remotely.
 
 ### 3.2 Attack Scenario
 
@@ -225,7 +223,7 @@ Please use Google Chrome to run the demos.
 ### Demonstrating the Defenses
 1. Unload the vulnerable extension and load the secure extension.
 2. Attempt attack 1: open `malicious_demo/index.html` and click the attack button. No response is received.
-3. Attempt attack 2: navigate to `malicious_demo/attack2.html` and click "Summarize Selection" without selecting text. The extension will not summarize any page content because no text is selectged. Then select only safe text (such as a transaction description), summarize, and verify that only the selected text appears in the summary. To test the regex defense, select text that includes sensitive data and confirm that values like SSNs and passwords are redacted in the stored summary.
+3. Attempt attack 2: navigate to `malicious_demo/attack2.html` and click "Summarize Selection" without selecting text. The extension will not summarize any page content because no text is selected. Then select only safe text (such as a transaction description), summarize, and verify that only the selected text appears in the summary. To test the regex defense, select text that includes sensitive data and confirm that values like SSNs and passwords are redacted in the stored summary.
 
 ---
 
