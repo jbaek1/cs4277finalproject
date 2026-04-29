@@ -233,7 +233,7 @@ Please use Google Chrome to run the demos.
 |-------------|--------------|
 | **Juan Guerrero** | Built the foundational extension architecture and boilerplate: Manifest V3 configuration, popup UI, background service worker, content script scaffolding, options page, and the storage layer. Developed the vulnerable version of the extension that serves as the baseline for both attacks. |
 | **Maret Rudin-Aulenbach** | Designed vulnerabilities and defenses for attacks 1 and 2, as well as implemented the Attack 1 defense, by removing the vulnerable `postMessage` bridge, adding origin validation, restricting history access to authorized extension UI only (popup and options page), and implementing sender validation (`!sender.tab`) in the background worker. |
-| **Jimmy Baek** | Designed and implemented attack 2 (over-collection of sensitive DOM data) including the `collectEntireDomText()` function that scrapes all visible text and hidden input values. Created the attack 2 demo page (`malicious_demo/attack2.html`), a mock bank portal with embedded sensitive data. Developed the attack 2 defense: replacing full DOM collection with selection only input (using `window.getSelection()` with a caching mechanism), adding the regex based sensitive data sanitizer (`sanitizeSensitiveData()`) in the background worker as a defense in depth layer, and implementing the UX elements (warning banner, selection required flow) in the secure popup. |
+| **Jimmy Baek** | Designed and implemented attack 2 (over-collection of sensitive DOM data). Created the attack 2 demo page. Developed the attack 2 defense: replacing full DOM collection with selection only input, adding the regex based sensitive data filter in the secure extension version. |
 
 ---
 
